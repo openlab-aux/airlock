@@ -135,9 +135,9 @@ var serveCmd = &coral.Command{
 			time.Sleep(5 * time.Second)
 			log.WithField("pin", OuterdoorPin).Info("pin low")
 			// OuterdoorPin.Low()
-			aussentuereLastOpened = time.Now()
 		})
-		mux.Handle("/", http.FileServer(http.Dir("static")))
+
+		mux.Handle("/", http.FileServer(http.FS(getStaticFS())))
 
 		log.WithField("port", "3000").Info("ListenAndServe")
 		return http.ListenAndServe(":3000", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -194,9 +194,13 @@ var userAddCmd = &coral.Command{
 //go:embed static
 var f embed.FS
 
-func getFS() fs.FS {
-	//return f
-	return os.DirFS("static")
+func getStaticFS() fs.FS {
+	if developerMode {
+		log.Warn("developer mode enabled, serving local files")
+		return os.DirFS("static")
+	}
+	log.Info("developer mode disabled, serving embedded files")
+	return f
 }
 
 type User struct {
@@ -223,11 +227,14 @@ func getDatabase() (*gorm.DB, error) {
 	return db, nil
 }
 
+var developerMode bool
+
 func init() {
 	log.SetFormatter(&log.TextFormatter{
 		FullTimestamp: true,
 	})
 	rootCmd.AddCommand(serveCmd)
+	serveCmd.Flags().BoolVar(&developerMode, "dev", false, "developer mode. Enables files from disk instead of files embeded into binary.")
 	rootCmd.AddCommand(userCmd)
 	userCmd.AddCommand(userAddCmd)
 }
