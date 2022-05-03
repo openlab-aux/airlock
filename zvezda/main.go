@@ -93,15 +93,15 @@ var serveCmd = &coral.Command{
 			"pinIdOuterdoors": pinIdOuterdoors,
 		}).Info("got environment variables")
 
-		// log.Info("Opening GPIO")
-		// err = rpio.Open()
-		// if err != nil {
-		// 	return err
-		// }
-		// InnerdoorPin = rpio.Pin(pinIdInnerdoors)
-		// InnerdoorPin.Output()
-		// OuterdoorPin = rpio.Pin(pinIdOuterdoors)
-		// OuterdoorPin.Output()
+		log.Info("Opening GPIO")
+		err = rpio.Open()
+		if err != nil {
+			return err
+		}
+		InnerdoorPin = rpio.Pin(pinIdInnerdoors)
+		InnerdoorPin.Output()
+		OuterdoorPin = rpio.Pin(pinIdOuterdoors)
+		OuterdoorPin.Output()
 
 		db, err := getDatabase()
 		if err != nil {
@@ -120,10 +120,10 @@ var serveCmd = &coral.Command{
 			innentuereLastOpened = time.Now()
 			log.WithField("username", r.Context().Value(CtxKey("username"))).Info("Innerdoor opened")
 			log.WithField("pin", InnerdoorPin).Info("pin high")
-			// InnerdoorPin.High()
+			InnerdoorPin.High()
 			time.Sleep(5 * time.Second)
 			log.WithField("pin", InnerdoorPin).Info("pin low")
-			// InnerdoorPin.Low()
+			InnerdoorPin.Low()
 		})
 
 		mux.HandleFunc("/open/outerdoor", func(w http.ResponseWriter, r *http.Request) {
@@ -134,13 +134,17 @@ var serveCmd = &coral.Command{
 			aussentuereLastOpened = time.Now()
 			log.WithField("username", r.Context().Value(CtxKey("username"))).Info("Outerdoor opened")
 			log.WithField("pin", OuterdoorPin).Info("pin high")
-			// OuterdoorPin.High()
+			OuterdoorPin.High()
 			time.Sleep(5 * time.Second)
 			log.WithField("pin", OuterdoorPin).Info("pin low")
-			// OuterdoorPin.Low()
+			OuterdoorPin.Low()
 		})
 
-		mux.Handle("/", http.FileServer(http.FS(getStaticFS())))
+		fs, err := getStaticFS()
+		if err != nil {
+			return err
+		}
+		mux.Handle("/", http.FileServer(http.FS(fs)))
 
 		log.WithField("port", "3000").Info("ListenAndServe")
 		return http.ListenAndServe(":3000", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
