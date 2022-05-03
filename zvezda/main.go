@@ -102,6 +102,7 @@ var serveCmd = &coral.Command{
 		// InnerdoorPin.Output()
 		// OuterdoorPin = rpio.Pin(pinIdOuterdoors)
 		// OuterdoorPin.Output()
+
 		db, err := getDatabase()
 		if err != nil {
 			return err
@@ -116,19 +117,21 @@ var serveCmd = &coral.Command{
 				w.WriteHeader(http.StatusTooEarly)
 				return
 			}
-			log.WithField("username", r.Context().Value(CtxKey("username"))).Info("Innentuere opened")
+			innentuereLastOpened = time.Now()
+			log.WithField("username", r.Context().Value(CtxKey("username"))).Info("Innerdoor opened")
 			log.WithField("pin", InnerdoorPin).Info("pin high")
 			// InnerdoorPin.High()
 			time.Sleep(5 * time.Second)
 			log.WithField("pin", InnerdoorPin).Info("pin low")
 			// InnerdoorPin.Low()
-			innentuereLastOpened = time.Now()
 		})
+
 		mux.HandleFunc("/open/outerdoor", func(w http.ResponseWriter, r *http.Request) {
 			if aussentuereLastOpened.Add(10 * time.Second).After(time.Now()) {
 				w.WriteHeader(http.StatusTooEarly)
 				return
 			}
+			aussentuereLastOpened = time.Now()
 			log.WithField("username", r.Context().Value(CtxKey("username"))).Info("Outerdoor opened")
 			log.WithField("pin", OuterdoorPin).Info("pin high")
 			// OuterdoorPin.High()
