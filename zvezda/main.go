@@ -53,13 +53,13 @@ func authMiddleware(db *gorm.DB, next http.Handler) http.Handler {
 		}
 		var user User
 		if err := db.Where("username = ?", username).First(&user).Error; err != nil {
-			log.Error(err)
+			log.WithField("username", username).Error(err)
 			w.Header().Set("WWW-Authenticate", `Basic realm="restricted", charset="UTF-8"`)
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 		if err := bcrypt.CompareHashAndPassword([]byte(user.Hash), []byte(password)); err != nil {
-			log.Error(err)
+			log.WithField("username", username).Error(err)
 			w.Header().Set("WWW-Authenticate", `Basic realm="restricted", charset="UTF-8"`)
 			w.WriteHeader(http.StatusUnauthorized)
 			return
