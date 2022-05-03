@@ -201,13 +201,13 @@ var userAddCmd = &coral.Command{
 //go:embed static
 var f embed.FS
 
-func getStaticFS() fs.FS {
+func getStaticFS() (fs.FS, error) {
 	if developerMode {
 		log.Warn("developer mode enabled, serving local files")
-		return os.DirFS("static")
+		return os.DirFS("static"), nil
 	}
 	log.Info("developer mode disabled, serving embedded files")
-	return f
+	return fs.Sub(f, "static")
 }
 
 type User struct {
