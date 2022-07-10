@@ -240,6 +240,33 @@ var userUpdateCmd = &coral.Command{
 	},
 }
 
+var userDeleteCmd = &coral.Command{
+	Use: "delete <user>",
+	RunE: func(_ *coral.Command, args []string) error {
+		db, err := getDatabase()
+		if err != nil {
+			return err
+		}
+		log.Info(db)
+
+		if len(args) < 1 {
+			return fmt.Errorf("which user do you want to delete?")
+		}
+		if len(args) > 1 {
+			return fmt.Errorf("please only enter a single user name")
+		}
+		username := args[0]
+
+		if err := db.Delete(&User{
+			Username: username,
+		}).Error; err != nil {
+			return err
+		}
+		log.Infof("user %s deleted", username)
+		return nil
+	},
+}
+
 //go:embed static
 var f embed.FS
 
@@ -286,6 +313,7 @@ func init() {
 	serveCmd.Flags().BoolVar(&developerMode, "dev", false, "developer mode. Enables files from disk instead of files embeded into binary.")
 	rootCmd.AddCommand(userCmd)
 	userCmd.AddCommand(userAddCmd)
+	userCmd.AddCommand(userDeleteCmd)
 	userCmd.AddCommand(userUpdateCmd)
 }
 
