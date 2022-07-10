@@ -181,7 +181,6 @@ var userAddCmd = &coral.Command{
 		if len(passwordBytes) < 8 {
 			return fmt.Errorf("password must be at least 8 characters long")
 		}
-		log.Info(passwordBytes)
 
 		hash, err := bcrypt.GenerateFromPassword(passwordBytes, -1)
 		if err != nil {
@@ -194,6 +193,49 @@ var userAddCmd = &coral.Command{
 		}).Error; err != nil {
 			return err
 		}
+		return nil
+	},
+}
+
+var userUpdateCmd = &coral.Command{
+	Use: "update <user>",
+	RunE: func(cmd *coral.Command, args []string) error {
+		db, err := getDatabase()
+		if err != nil {
+			return err
+		}
+		log.Info(db)
+
+		if len(args) < 1 {
+			return fmt.Errorf("which user do you want to add?")
+		}
+		if len(args) > 1 {
+			return fmt.Errorf("please only enter a single user name")
+		}
+		username := args[0]
+		fmt.Printf("Password for %s: ", username)
+		passwordBytes, err := term.ReadPassword(int(syscall.Stdin))
+		if err != nil {
+			return err
+		}
+		fmt.Printf("\n")
+		if len(passwordBytes) < 8 {
+			return fmt.Errorf("password must be at least 8 characters long")
+		}
+
+		hash, err := bcrypt.GenerateFromPassword(passwordBytes, -1)
+		if err != nil {
+			return err
+		}
+
+		if err := db.Model(&User{
+			Username: username,
+		}).Updates(&User{
+			Hash: hash,
+		}).Error; err != nil {
+			return err
+		}
+		log.Infof("user %s updated", username)
 		return nil
 	},
 }
@@ -244,6 +286,7 @@ func init() {
 	serveCmd.Flags().BoolVar(&developerMode, "dev", false, "developer mode. Enables files from disk instead of files embeded into binary.")
 	rootCmd.AddCommand(userCmd)
 	userCmd.AddCommand(userAddCmd)
+	userCmd.AddCommand(userUpdateCmd)
 }
 
 func main() {
