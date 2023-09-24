@@ -1,0 +1,4 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "Airlock-Mainboard-rescue")(type "KiCad")(uri "${KIPRJMOD}/Airlock-Mainboard-rescue.kicad_sym")(options "")(descr ""))
+)
